@@ -97,7 +97,7 @@ class Charm(object):
         self.options = Options()
         self.options.profiling = False
         self.options.pickle_protocol = -1  # -1 selects the highest protocol number
-        self.options.local_msg_optim = True
+        self.options.local_msg_optim = False
         self.options.local_msg_buf_size = 50
         self.options.auto_flush_wait_queues = True
         self.options.quiet = False
@@ -110,7 +110,12 @@ class Charm(object):
             # this is needed for OpenMPI, see:
             # https://svn.open-mpi.org/trac/ompi/wiki/Linkers
             import ctypes
-            self.__libmpi__ = ctypes.CDLL('libmpi.so', mode=ctypes.RTLD_GLOBAL)
+            try:
+                self.__libmpi__ = ctypes.CDLL('libmpi.so', mode=ctypes.RTLD_GLOBAL)
+            except OSError:
+                # For IBM's Spectrum MPI, which is based on Open MPI, but renames the library
+                self.__libmpi__ = ctypes.CDLL('libmpi_ibm.so', mode=ctypes.RTLD_GLOBAL)
+                
         self.lib = load_charm_library(self)
         self.ReducerType = self.lib.ReducerType
         self.CkContributeToChare = self.lib.CkContributeToChare
